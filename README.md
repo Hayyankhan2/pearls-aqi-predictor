@@ -229,6 +229,18 @@ OPENWEATHER_API_KEY = ""
 
 6. Deploy.
 
+The Hopsworks API key must include these scopes for the deployed workflows:
+
+- `project`
+- `featurestore`
+- `job`
+- `kafka`
+- `modelregistry`
+- `dataset.create`
+- `dataset.view`
+- `dataset.delete`
+- `serving`
+
 ## Configuration
 
 Change `config.yaml` to forecast another city:
