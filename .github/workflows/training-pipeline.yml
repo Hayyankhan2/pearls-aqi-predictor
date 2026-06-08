@@ -1,0 +1,63 @@
+# Daily training pipeline.
+# Re-reads the feature store, retrains all candidate models, and registers the
+# best one in the model registry. Runs once a day via cron.
+name: training-pipeline
+
+on:
+  schedule:
+    - cron: "30 0 * * *"     # 00:30 UTC daily
+  workflow_dispatch:
+    inputs:
+      full_training:
+        description: "Install full optional ML stack and run non-quick training"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    env:
+      HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
+      HOPSWORKS_PROJECT: ${{ secrets.HOPSWORKS_PROJECT }}
+      FULL_TRAINING: ${{ github.event.inputs.full_training == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Validate required Hopsworks secrets
+        run: |
+          test -n "$HOPSWORKS_API_KEY" || (echo "Missing HOPSWORKS_API_KEY repository secret" && exit 1)
+          test -n "$HOPSWORKS_PROJECT" || (echo "Missing HOPSWORKS_PROJECT repository secret" && exit 1)
+
+      - name: Install dependencies
+        run: |
+          if [ "$FULL_TRAINING" = "true" ]; then
+            pip install -r requirements.txt
+          else
+            pip install -r requirements-actions.txt
+          fi
+
+      - name: Train + register models
+        run: |
+          if [ "$FULL_TRAINING" = "true" ]; then
+            python -m pipelines.training_pipeline --auto-backfill
+          else
+            python -m pipelines.training_pipeline --quick --auto-backfill
+          fi
+
+      - name: Upload model metrics artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-metrics
+          path: |
+            models/metrics.json
+            models/model_comparison.csv
+          if-no-files-found: ignore

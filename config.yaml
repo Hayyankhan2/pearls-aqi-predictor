@@ -1,0 +1,51 @@
+# ============================================================
+# Pearls AQI Predictor - central configuration
+# Everything that changes between cities / environments lives here.
+# ============================================================
+
+project:
+  name: "Pearls AQI Predictor"
+  forecast_horizon_days: 3        # predict AQI for the next N days
+
+# Target location. Karachi by default; change lat/lon + name for any city.
+location:
+  city: "Karachi"
+  country: "Pakistan"
+  latitude: 24.8607
+  longitude: 67.0011
+  timezone: "Asia/Karachi"
+  # AQICN station feed: "@<id>" or a city slug like "karachi". Used for live AQI.
+  aqicn_station: "karachi"
+
+# Which raw provider is the source of truth for each signal.
+#   open-meteo : free, no API key, gives weather + pollutants + 3-day forecast
+#   aqicn      : live official AQI reading (needs free token)
+#   openweather: alternate provider (needs free key)
+data_sources:
+  weather_provider: "open-meteo"        # open-meteo | openweather
+  pollutant_provider: "open-meteo"      # open-meteo | openweather | aqicn
+  live_aqi_provider: "aqicn"            # aqicn | open-meteo
+  backfill_start_date: "2022-01-01"     # historical backfill window start
+
+# Feature store / model registry backend.
+#   auto      : use Hopsworks if HOPSWORKS_API_KEY is set, else local
+#   hopsworks : force Hopsworks
+#   local     : force local parquet/joblib store (no signup, great for demos)
+backend:
+  mode: "auto"
+  hopsworks_project: ""                 # optional; read from env if blank
+  feature_group: "aqi_features"
+  feature_group_version: 1
+  predictions_group: "aqi_predictions"
+  model_name: "aqi_predictor"
+  local_dir: "data"                     # where the local store writes parquet/csv
+  models_dir: "models"
+
+# Training configuration.
+training:
+  test_size_days: 60                    # last N days held out for evaluation
+  cv_splits: 5                          # TimeSeriesSplit folds
+  random_seed: 42
+  hazardous_aqi_threshold: 150          # alert level (US AQI 'Unhealthy')
+  enable_tensorflow: true               # set false to skip the deep model
+  enable_boosting: true                 # set false to skip XGBoost/LightGBM

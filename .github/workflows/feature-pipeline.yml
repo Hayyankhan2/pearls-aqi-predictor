@@ -1,0 +1,51 @@
+# Hourly feature pipeline + 3-day inference.
+# Fetches the latest weather/AQI, updates the feature store, and refreshes
+# predictions. Runs every hour via cron (the "serverless" CI/CD requirement).
+name: feature-pipeline
+
+on:
+  schedule:
+    - cron: "0 * * * *"      # every hour, on the hour (UTC)
+  workflow_dispatch: {}       # allow manual runs from the Actions tab
+
+jobs:
+  feature-and-inference:
+    runs-on: ubuntu-latest
+    env:
+      HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
+      HOPSWORKS_PROJECT: ${{ secrets.HOPSWORKS_PROJECT }}
+      AQICN_TOKEN: ${{ secrets.AQICN_TOKEN }}
+      OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Validate required Hopsworks secrets
+        run: |
+          test -n "$HOPSWORKS_API_KEY" || (echo "Missing HOPSWORKS_API_KEY repository secret" && exit 1)
+          test -n "$HOPSWORKS_PROJECT" || (echo "Missing HOPSWORKS_PROJECT repository secret" && exit 1)
+
+      - name: Install dependencies
+        run: pip install -r requirements-actions.txt
+
+      - name: Run feature pipeline (fetch -> features -> feature store)
+        run: python -m pipelines.feature_pipeline
+
+      - name: Run inference pipeline (predict next 3 days)
+        run: |
+          python -m pipelines.inference_pipeline || (
+            echo "Inference failed. Running quick cloud training/backfill, then retrying inference."
+            python -m pipelines.training_pipeline --quick --auto-backfill
+            python -m pipelines.inference_pipeline
+          )
+
+      - name: Upload prediction artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: latest-aqi-predictions
+          path: data/latest_predictions.json
+          if-no-files-found: ignore
