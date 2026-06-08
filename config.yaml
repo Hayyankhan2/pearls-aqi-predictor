@@ -32,7 +32,7 @@ data_sources:
 #   hopsworks : force Hopsworks
 #   local     : force local parquet/joblib store (no signup, great for demos)
 backend:
-  mode: "auto"
+  mode: "hopsworks"
   hopsworks_project: ""                 # optional; read from env if blank
   feature_group: "aqi_features"
   feature_group_version: 1

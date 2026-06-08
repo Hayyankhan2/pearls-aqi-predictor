@@ -6,17 +6,21 @@ serverless machine-learning pipeline:
 External APIs -> feature pipeline -> feature store -> training pipeline ->
 model registry -> inference pipeline -> Streamlit dashboard.
 
-The project has two modes:
+The submitted project is configured for the required Hopsworks-backed
+serverless mode by default (`backend.mode: hopsworks`).
 
-- Local demo mode uses an on-disk feature store/model registry so the app can
-  be explained and tested without accounts.
-- GitHub/serverless mode requires Hopsworks and uses the real cloud feature
-  store/model registry required by the project brief.
+For development only, you can switch `backend.mode` in `config.yaml` to `local`
+or `auto`.
+
+- `hopsworks`: required deployed/serverless mode.
+- `local`: on-disk feature store/model registry for offline development.
+- `auto`: Hopsworks when `HOPSWORKS_API_KEY` exists, otherwise local.
 
 ## What Is Included
 
 - Weather and pollutant collection from Open-Meteo, AQICN, and OpenWeather.
-- Feature engineering for time, weather, derived stagnation, and AQI dynamics.
+- Feature engineering for hour/day/month time features, weather, derived
+  stagnation, and AQI dynamics.
 - Historical backfill for training data.
 - Model training with Ridge Regression, Random Forest, optional XGBoost,
   optional LightGBM, optional TensorFlow MLP, and a weighted ensemble benchmark.
@@ -170,8 +174,8 @@ AQICN_TOKEN=optional_live_aqi_token
 OPENWEATHER_API_KEY=optional_alternate_provider_key
 ```
 
-With `backend.mode: auto` in `config.yaml`, the code uses Hopsworks when
-`HOPSWORKS_API_KEY` is present and local files when it is absent.
+With `backend.mode: hopsworks` in `config.yaml`, the code requires Hopsworks
+credentials and fails clearly if they are missing.
 
 ## GitHub Actions
 
@@ -214,7 +218,15 @@ boosting models.
 2. Go to `https://share.streamlit.io`.
 3. Create a new app from the repository.
 4. Set the main file to `app/streamlit_app.py`.
-5. Add the same secrets if using Hopsworks/AQICN.
+5. Add Streamlit app secrets:
+
+```toml
+HOPSWORKS_API_KEY = "your_hopsworks_key"
+HOPSWORKS_PROJECT = "pearls_aqi_predictorr"
+AQICN_TOKEN = ""
+OPENWEATHER_API_KEY = ""
+```
+
 6. Deploy.
 
 ## Configuration

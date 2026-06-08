@@ -127,6 +127,11 @@ def get_model_registry() -> ModelRegistry:
         try:
             return HopsworksModelRegistry()
         except Exception as exc:
-            log.warning("Falling back to LocalModelRegistry (Hopsworks error: %s)", exc)
-            return LocalModelRegistry()
+            if CONFIG.backend.get("mode", "auto") == "auto":
+                log.warning("Falling back to LocalModelRegistry (Hopsworks error: %s)", exc)
+                return LocalModelRegistry()
+            raise RuntimeError(
+                "Hopsworks model registry is required but could not be initialized. "
+                "Set HOPSWORKS_API_KEY and HOPSWORKS_PROJECT in this environment."
+            ) from exc
     return LocalModelRegistry()

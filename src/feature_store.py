@@ -151,6 +151,11 @@ def get_feature_store() -> FeatureStore:
         try:
             return HopsworksFeatureStore()
         except Exception as exc:
-            log.warning("Falling back to LocalFeatureStore (Hopsworks error: %s)", exc)
-            return LocalFeatureStore()
+            if CONFIG.backend.get("mode", "auto") == "auto":
+                log.warning("Falling back to LocalFeatureStore (Hopsworks error: %s)", exc)
+                return LocalFeatureStore()
+            raise RuntimeError(
+                "Hopsworks backend is required but could not be initialized. "
+                "Set HOPSWORKS_API_KEY and HOPSWORKS_PROJECT in this environment."
+            ) from exc
     return LocalFeatureStore()

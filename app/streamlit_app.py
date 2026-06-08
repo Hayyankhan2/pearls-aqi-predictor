@@ -15,6 +15,7 @@ Run:  streamlit run app/streamlit_app.py
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -22,6 +23,18 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+
+for _secret_name in (
+    "HOPSWORKS_API_KEY",
+    "HOPSWORKS_PROJECT",
+    "AQICN_TOKEN",
+    "OPENWEATHER_API_KEY",
+):
+    try:
+        if _secret_name in st.secrets and not os.getenv(_secret_name):
+            os.environ[_secret_name] = str(st.secrets[_secret_name])
+    except Exception:
+        pass
 
 # Make ``src`` importable when run via ``streamlit run``.
 ROOT = Path(__file__).resolve().parents[1]
