@@ -1,0 +1,21 @@
+# Pearls AQI Predictor - FULL local training stack.
+#
+# Lean runtime (above) PLUS the heavy optional models. Install locally on
+# Python 3.11 or 3.12 (NOT 3.14 - TensorFlow has no 3.14 wheels yet):
+#
+#     pip install -r requirements-full.txt
+#
+# GitHub Actions uses this file only for the manual full_training run.
+
+-r requirements.txt
+
+# ---- Gradient boosting ----
+xgboost>=2.0.0
+lightgbm>=4.3.0
+
+# ---- Explainability ----
+shap>=0.44.0
+
+# ---- Deep learning (ensemble still works without it) ----
+tensorflow-cpu>=2.15.0 ; platform_system != "Darwin"
+tensorflow>=2.15.0 ; platform_system == "Darwin"
