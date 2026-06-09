@@ -5,7 +5,7 @@ name: training-pipeline
 
 on:
   schedule:
-    - cron: "30 0 * * *"     # 00:30 UTC daily
+    - cron: "30 0 * * *" # 00:30 UTC daily
   workflow_dispatch:
     inputs:
       full_training:
@@ -21,9 +21,9 @@ jobs:
   train:
     runs-on: ubuntu-latest
     env:
-      HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
-      HOPSWORKS_PROJECT: ${{ secrets.HOPSWORKS_PROJECT }}
-      FULL_TRAINING: ${{ github.event.inputs.full_training == 'true' }}
+      HOPSWORKS_API_KEY: $ secrets.HOPSWORKS_API_KEY 
+      HOPSWORKS_PROJECT: $ secrets.HOPSWORKS_PROJECT 
+      FULL_TRAINING: $ github.event.inputs.full_training 
     steps:
       - uses: actions/checkout@v4
 
@@ -40,7 +40,7 @@ jobs:
       - name: Install dependencies
         run: |
           if [ "$FULL_TRAINING" = "true" ]; then
-            pip install -r requirements.txt
+            pip install -r requirements-full.txt
           else
             pip install -r requirements-actions.txt
           fi
